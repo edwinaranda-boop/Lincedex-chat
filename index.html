@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinceDex Chat Evolution</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', -apple-system, sans-serif; }
+        
+        /* FONDOS DINÁMICOS FRUTIGER AERO */
+        body { background-attachment: fixed; height: 100vh; display: flex; flex-direction: column; transition: background 0.5s ease; }
+        
+        body.bg-aqua {
+            background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 50%),
+                        radial-gradient(circle at 0% 100%, rgba(140, 255, 170, 0.65) 0%, rgba(140, 255, 170, 0) 55%),
+                        radial-gradient(circle at 100% 100%, rgba(0, 180, 216, 0.6) 0%, rgba(0, 180, 216, 0) 55%),
+                        linear-gradient(160deg, #bbf0ff 0%, #30c1dc 45%, #008cb5 100%);
+        }
+        body.bg-aurora {
+            background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 50%),
+                        radial-gradient(circle at 100% 0%, rgba(255, 230, 100, 0.5) 0%, rgba(255,230,100,0) 40%),
+                        linear-gradient(135deg, #7ee8fa 0%, #80ff72 60%, #11998e 100%);
+        }
+        body.bg-cosmic {
+            background: radial-gradient(circle at 30% 0%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0) 40%),
+                        linear-gradient(150deg, #90caf9 0%, #5c6bc0 40%, #283593 100%);
+        }
+
+        /* EFECTO ZUMBIDO */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(0px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(2px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(2px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(0deg); }
+        }
+        .shake { animation: shake 0.4s infinite; }
+
+        .chat-container { 
+            flex: 1; display: flex; flex-direction: column; max-width: 600px; width: 100%; margin: 0 auto; 
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            overflow: hidden; border-left: 1px solid rgba(255, 255, 255, 0.45); border-right: 1px solid rgba(255, 255, 255, 0.45); 
+            box-shadow: 0 0 35px rgba(0, 80, 110, 0.2); position: relative;
+        }
+
+        .chat-header { 
+            background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, rgba(0,180,216,0.8) 15%, rgba(0,119,182,0.85) 50%, rgba(0,90,140,0.9) 100%);
+            color: white; padding: 14px; display: flex; justify-content: space-between; align-items: center;
+            font-weight: 700; border-bottom: 1px solid rgba(255, 255, 255, 0.4); text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .user-counter {
+            background: rgba(255, 255, 255, 0.25); padding: 4px 10px; border-radius: 12px; font-size: 11px;
+            border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 1px 2px rgba(255,255,255,0.3);
+            display: flex; align-items: center; gap: 5px;
+        }
+        .status-dot-online { width: 8px; height: 8px; background: #39ff14; border-radius: 50%; box-shadow: 0 0 8px #39ff14; }
+
+        .chat-messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; }
+
+        /* Contenedor de Mensaje con Fila de Avatar */
+        .msg-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; clear: both; width: 100%; }
+        .msg-row.mismo-usuario { flex-direction: row-reverse; }
+
+        /* Avatar de Esfera de Vidrio */
+        .avatar-glass {
+            width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(200,225,245,0.6) 100%);
+            border: 1px solid rgba(255,255,255,0.7); box-shadow: 0 3px 6px rgba(0,0,0,0.1), inset 0 1px 2px #fff;
+        }
+
+        #typingIndicator {
+            padding: 6px 16px; font-size: 11px; color: rgba(0,60,90,0.7); font-weight: 600; font-style: italic;
+            background: rgba(255,255,255,0.3); backdrop-filter: blur(5px); display: none; border-top: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .input-panel { 
+            background: rgba(240, 248, 255, 0.45); padding: 14px; backdrop-filter: blur(15px); 
+            -webkit-backdrop-filter: blur(15px); border-top: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .inputs-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; }
+        
+        .status-selector { position: relative; display: inline-block; }
+        .status-gemma {
+            width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 2px #fff; transition: background 0.3s;
+        }
+        .status-gemma.disponible { background: linear-gradient(to bottom, #a8ff78, #43a047); }
+        .status-gemma.ausente { background: linear-gradient(to bottom, #ffb74d, #f57c00); }
+        .status-gemma.ocupado { background: linear-gradient(to bottom, #e57373, #d32f2f); }
+
+        #usernameInput, #messageInput { 
+            padding: 10px 14px; border: 1px solid rgba(0, 140, 180, 0.35); border-radius: 24px; 
+            background: rgba(255, 255, 255, 0.85); color: #111; font-size: 14px; outline: none;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.06), 0 1px 0 rgba(255,255,255,0.8);
+        }
+        #usernameInput { width: 30%; }
+        #messageInput { flex: 1; }
+        #usernameInput:focus, #messageInput:focus { background: #fff; border-color: #00b4d8; box-shadow: 0 0 8px rgba(0,180,216,0.5); }
+
+        .actions-row { display: flex; justify-content: space-between; align-items: center; }
+        .left-actions { display: flex; gap: 8px; }
+
+        .btn-action { 
+            background: linear-gradient(to bottom, #ffffff 0%, #f2f8fc 40%, #cfe3f5 100%); 
+            border: 1px solid rgba(0, 120, 170, 0.4); border-radius: 50%; width: 40px; height: 40px; 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08), inset 0 1px 1px #fff; transition: transform 0.1s;
+        }
+        .btn-action:active { transform: scale(0.95); }
+
+        #sendBtn { 
+            background: linear-gradient(to bottom, #d2ff80 0%, #76ff03 45%, #52e500 50%, #3ca800 100%); 
+            color: #042500; border-radius: 24px; padding: 11px 26px; font-weight: 700; font-size: 14px;
+            cursor: pointer; border: 1px solid #45b300; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 8px rgba(0, 50, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.85);
+        }
+
+        .reaction-badge {
+            display: inline-flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.7);
+            padding: 2px 6px; border-radius: 10px; font-size: 10px; border: 1px solid rgba(0,150,200,0.2);
+            cursor: pointer; margin-top: 4px; margin-right: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="bg-aqua" id="appBody">
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">
+            <span>🧼 LinceDex Chat</span>
+            <div class="user-counter">
+                <div class="status-dot-online"></div>
+                <span id="counterText">1 en línea</span>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages"></div>
+        
+        <div id="typingIndicator">🛡️ Admin está escribiendo...</div>
+        
+        <div class="input-panel">
+            <div class="inputs-row">
+                <div class="status-selector" onclick="ciclarEstado()" title="Cambiar estado">
+                    <div class="status-gemma disponible" id="myStatusGemma"></div>
+                </div>
+                
+                <div style="position: relative; display: inline-block;">
+                    <div class="avatar-glass" id="myAvatarPreview" onclick="toggleAvatarPicker()" style="cursor: pointer; width: 32px; height: 32px; font-size: 15px;" title="Elegir mi Icono">🦋</div>
+                    <div id="avatarPicker" style="display: none; position: absolute; bottom: 38px; left: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); border-radius: 14px; padding: 8px; gap: 10px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,60,90,0.2); flex-wrap: wrap; width: 150px; border-top: 1.5px solid #fff;">
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🦋')">🦋</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🐱')">🐱</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🐟')">🐟</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🐥')">🐥</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('⚽')">⚽</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🌀')">🌀</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🍀')">🍀</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🫧')">🫧</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('💎')">💎</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🐸')">🐸</span>
+                        <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🌟')">🌟</span>
+                    </div>
+                </div>
+
+                <input type="text" id="usernameInput" placeholder="Nombre...">
+                <input type="text" id="messageInput" placeholder="Escribe un mensaje...">
+            </div>
+            <div class="actions-row">
+                <div class="left-actions">
+                    <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                    <button class="btn-action" onclick="document.getElementById('imageInput').click()" title="Enviar Sticker">✨</button>
+                    <button class="btn-action" id="nudgeBtn" title="¡Enviar Zumbido! 📳">📳</button>
+                    <button class="btn-action" onclick="rotarFondo()" title="Cambiar Fondo de Pantalla">🖼️</button>
+                </div>
+                <button id="sendBtn">Enviar</button>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
