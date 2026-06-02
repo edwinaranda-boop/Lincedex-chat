@@ -7,240 +7,120 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
     <style>
-        /* --- TUS ESTILOS BASE Y ANIMACIÓN AURORA --- */
-        * { 
-            box-sizing: border-box; 
-            margin: 0; 
-            padding: 0; 
-            font-family: 'Segoe UI', system-ui, sans-serif; 
-        }
-        
-        body { 
-            background: linear-gradient(135deg, #00b4db 0%, #0083b0 40%, #a8ff78 100%); 
-            background-size: 400% 400%; 
-            animation: aurora 15s ease infinite; 
-            height: 100vh;
-            height: 100dvh; /* Solución dinámica para navegadores móviles */
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            overflow: hidden; 
-        }
-        
-        @keyframes aurora { 
-            0% { background-position: 0% 50%; } 
-            50% { background-position: 100% 50%; } 
-            100% { background-position: 0% 50%; } 
-        }
+        /* --- ESTILOS BASE --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+        body { height: 100vh; height: 100dvh; display: flex; justify-content: center; align-items: center; overflow: hidden; background-size: 400% 400%; transition: background 0.5s ease, color 0.5s ease; }
 
-        /* --- TU CONTENEDOR DE CHAT ESTILO CRISTAL --- */
-        .chat-container { 
-            width: 100%; 
-            max-width: 480px; 
-            height: 100vh;
-            height: 100dvh; /* Ajuste dinámico para evitar recortes */
-            background: rgba(255, 255, 255, 0.23); 
-            backdrop-filter: blur(12px); 
-            -webkit-backdrop-filter: blur(12px); 
-            border: 1px solid rgba(255, 255, 255, 0.4); 
-            box-shadow: 0 8px 32px rgba(0, 131, 176, 0.25); 
-            display: flex; 
-            flex-direction: column; 
-            position: relative; 
-        }
+        /* --- 🎨 LOS TEMAS DISPONIBLES --- */
+        body.bg-aqua { background: linear-gradient(135deg, #00b4db 0%, #0083b0 40%, #a8ff78 100%); background-size: 400% 400%; animation: aurora 15s ease infinite; }
+        body.bg-aurora { background: linear-gradient(135deg, #0575e6 0%, #00f260 100%); background-size: 400% 400%; animation: aurora 15s ease infinite; }
+        body.bg-cosmic { background: linear-gradient(135deg, #1f4068 0%, #162447 50%, #041562 100%); background-size: 400% 400%; animation: aurora 15s ease infinite; }
+        body.bg-symbian { background: linear-gradient(135deg, #00549e 0%, #002d5a 100%); animation: none; }
+        body.bg-wphone { background: #000000; animation: none; }
+        @keyframes aurora { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* --- TU ENCABEZADO FRUTIGER AERO --- */
-        .chat-header { 
-            background: linear-gradient(to bottom, rgba(0,180,219,0.75) 0%, rgba(0,131,176,0.6) 100%); 
-            padding: 12px 16px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3); 
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 8px rgba(0,0,0,0.1);
-            color: white;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            font-weight: 700;
-        }
-
-        .user-counter {
-            background: rgba(255, 255, 255, 0.25); padding: 4px 10px; border-radius: 12px; font-size: 11px;
-            border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 1px 2px rgba(255,255,255,0.3);
-            display: flex; align-items: center; gap: 5px; text-shadow: none;
-        }
+        /* --- CONTENEDOR DE CHAT ESTILO CRISTAL --- */
+        .chat-container { width: 100%; max-width: 480px; height: 100vh; height: 100dvh; background: rgba(255, 255, 255, 0.23); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(0, 131, 176, 0.25); display: flex; flex-direction: column; position: relative; transition: all 0.5s ease; }
+        .chat-header { background: linear-gradient(to bottom, rgba(0,180,219,0.75) 0%, rgba(0,131,176,0.6) 100%); padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.3); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 2px 8px rgba(0,0,0,0.1); color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.3); font-weight: 700; }
+        .user-counter { background: rgba(255, 255, 255, 0.25); padding: 4px 10px; border-radius: 12px; font-size: 11px; border: 1px solid rgba(255,255,255,0.4); box-shadow: inset 0 1px 2px rgba(255,255,255,0.3); display: flex; align-items: center; gap: 5px; text-shadow: none; }
         .status-dot-online { width: 8px; height: 8px; background: #39ff14; border-radius: 50%; box-shadow: 0 0 8px #39ff14; }
 
         /* --- MENSAJES Y FILAS --- */
-        .chat-messages { 
-            flex: 1; 
-            padding: 15px; 
-            overflow-y: auto; 
-            background: rgba(255, 255, 255, 0.08); 
-            display: flex; 
-            flex-direction: column;
-        }
-
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; background: rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; }
         .msg-row { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 14px; clear: both; width: 100%; }
         .msg-row.mismo-usuario { flex-direction: row-reverse; }
-
-        .avatar-glass {
-            width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 16px; background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(200,225,245,0.6) 100%);
-            border: 1px solid rgba(255,255,255,0.7); box-shadow: 0 3px 6px rgba(0,0,0,0.1), inset 0 1px 2px #fff;
-        }
-
-        #typingIndicator {
-            padding: 6px 16px; font-size: 11px; color: rgba(0,60,90,0.7); font-weight: 600; font-style: italic;
-            background: rgba(255,255,255,0.3); backdrop-filter: blur(5px); display: none; border-top: 1px solid rgba(255,255,255,0.2);
-        }
+        .avatar-glass { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(200,225,245,0.6) 100%); border: 1px solid rgba(255,255,255,0.7); box-shadow: 0 3px 6px rgba(0,0,0,0.1), inset 0 1px 2px #fff; transition: all 0.4s ease; }
+        #typingIndicator { padding: 6px 16px; font-size: 11px; color: rgba(0,60,90,0.7); font-weight: 600; font-style: italic; background: rgba(255,255,255,0.3); backdrop-filter: blur(5px); display: none; border-top: 1px solid rgba(255,255,255,0.2); }
 
         /* --- PANEL DE ENTRADA DE TEXTO --- */
-        .input-panel { 
-            padding: 12px;
-            padding-bottom: calc(12px + env(safe-area-inset-bottom)); /* Respeta el espacio de barras gestuales de Android/iOS */
-            background: rgba(255, 255, 255, 0.3);
-            border-top: 1px solid rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
+        .input-panel { padding: 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, 0.3); border-top: 1px solid rgba(255, 255, 255, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; flex-direction: column; gap: 10px; }
         .inputs-row { display: flex; gap: 8px; align-items: center; }
-        
         .status-selector { position: relative; display: inline-block; }
-        .status-gemma {
-            width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.8);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 2px #fff; transition: background 0.3s;
-        }
+        .status-gemma { width: 16px; height: 16px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 2px #fff; transition: background 0.3s; }
         .status-gemma.disponible { background: linear-gradient(to bottom, #a8ff78, #43a047); }
         .status-gemma.ausente { background: linear-gradient(to bottom, #ffb74d, #f57c00); }
         .status-gemma.ocupado { background: linear-gradient(to bottom, #e57373, #d32f2f); }
 
-        #usernameInput, #messageInput { 
-            padding: 10px 14px; border: 1px solid rgba(0, 131, 176, 0.3); border-radius: 20px; 
-            background: rgba(255, 255, 255, 0.85); color: #002233; outline: none;
-            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); font-size: 14px;
-        }
+        #usernameInput, #messageInput { padding: 10px 14px; border: 1px solid rgba(0, 131, 176, 0.3); border-radius: 20px; background: rgba(255, 255, 255, 0.85); color: #002233; outline: none; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); font-size: 14px; transition: all 0.4s ease; }
         #usernameInput { width: 30%; }
         #messageInput { flex: 1; }
         #usernameInput:focus, #messageInput:focus { background: white; border-color: #00b4db; box-shadow: 0 0 6px rgba(0, 180, 219, 0.5); }
 
         .actions-row { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .left-actions { display: flex; gap: 8px; }
-
-        /* --- BOTONES ESTILO ELEMENTO AGUA --- */
-        .btn-action { 
-            background: linear-gradient(to bottom, #ffffff 0%, #dceeff 100%);
-            color: #0083b0; border: 1px solid rgba(0, 120, 170, 0.4); border-radius: 50%; width: 38px; height: 38px; 
-            cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 1px #fff; transition: transform 0.1s;
-        }
+        .btn-action { background: linear-gradient(to bottom, #ffffff 0%, #dceeff 100%); color: #0083b0; border: 1px solid rgba(0, 120, 170, 0.4); border-radius: 50%; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.1), inset 0 1px 1px #fff; transition: transform 0.1s, border-radius 0.4s; }
         .btn-action:active { transform: scale(0.95); }
-
-        #sendBtn { 
-            padding: 10px 22px;
-            background: linear-gradient(to bottom, #a8ff78 0%, #78ffd6 100%);
-            border: 1px solid rgba(255,255,255,0.5);
-            border-radius: 20px;
-            color: #004d40;
-            font-weight: bold;
-            font-size: 14px;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .reaction-badge {
-            display: inline-flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.7);
-            padding: 2px 6px; border-radius: 10px; font-size: 10px; border: 1px solid rgba(0,150,200,0.2);
-            cursor: pointer; margin-top: 4px; margin-right: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-
-        /* --- EFECTO SHAKE PARA EL ZUMBIDO --- */
+        #sendBtn { padding: 10px 22px; background: linear-gradient(to bottom, #a8ff78 0%, #78ffd6 100%); border: 1px solid rgba(255,255,255,0.5); border-radius: 20px; color: #004d40; font-weight: bold; font-size: 14px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: all 0.4s ease; }
+        .reaction-badge { display: inline-flex; align-items: center; gap: 2px; background: rgba(255,255,255,0.7); padding: 2px 6px; border-radius: 10px; font-size: 10px; border: 1px solid rgba(0,150,200,0.2); cursor: pointer; margin-top: 4px; margin-right: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .shake { animation: shake 0.4s infinite; }
-        @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(0px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(2px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(2px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(0deg); }
-        }
+        @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(0px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(2px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(2px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(0deg); } }
 
         /* --- PANTALLA DE PRESENTACIÓN DE GARY --- */
-        #pantalla-bienvenida {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 40, 50, 0.4); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px;
-        }
-        .caja-cristal-bienvenida {
-            background: rgba(255, 255, 255, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 24px; padding: 35px 25px;
-            text-align: center; color: #fff; box-shadow: 0 8px 32px rgba(0, 131, 176, 0.3), inset 0 2px 4px rgba(255,255,255,0.5);
-            max-width: 420px; width: 100%; text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
+        #pantalla-bienvenida { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 40, 50, 0.4); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; }
+        .caja-cristal-bienvenida { background: rgba(255, 255, 255, 0.25); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 24px; padding: 35px 25px; text-align: center; color: #fff; box-shadow: 0 8px 32px rgba(0, 131, 176, 0.3), inset 0 2px 4px rgba(255,255,255,0.5); max-width: 420px; width: 100%; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .titulo-proyecto { color: #a8ff78; text-shadow: 0 2px 8px rgba(168, 255, 120, 0.4), 0 1px 2px rgba(0,0,0,0.4); margin: 12px 0; font-size: 28px; font-weight: bold; }
         .texto-principal { font-size: 16px; line-height: 1.5; margin-bottom: 18px; color: #f0fdf4; }
         .caja-reglas { background: rgba(0, 60, 80, 0.3); border-left: 4px solid #78ffd6; padding: 12px; margin: 20px 0; border-radius: 0 12px 12px 0; font-size: 15px; text-align: left; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
         .despedida { font-style: italic; margin-bottom: 5px; font-size: 15px; color: #e0f2fe; }
         .firma { font-size: 22px; margin-bottom: 25px; text-shadow: 0 1px 4px rgba(255,255,255,0.3); color: #fff; }
         
-        #boton-entrar {
-            padding: 12px 35px; background: linear-gradient(to bottom, #a8ff78 0%, #78ffd6 100%);
-            border: 1px solid rgba(255,255,255,0.6); border-radius: 20px; color: #004d40; font-weight: bold;
-            font-size: 17px; cursor: pointer; box-shadow: 0 4px 12px rgba(120, 255, 214, 0.3);
-            transition: transform 0.1s;
-        }
+        #boton-entrar { padding: 12px 35px; background: linear-gradient(to bottom, #a8ff78 0%, #78ffd6 100%); border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 20px; color: #004d40; font-weight: bold; font-size: 17px; cursor: pointer; box-shadow: 0 4px 12px rgba(120, 255, 214, 0.3); transition: transform 0.1s; }
         #boton-entrar:active { transform: scale(0.95); }
+
+        /* REGLAS EN CASCADA: TEMA SYMBIAN OS (NOKIA) */
+        body.bg-symbian .chat-container { background: #f0f4f8; border: 1px solid #a0b0c0; box-shadow: 0 8px 24px rgba(0,0,0,0.2); border-radius: 16px; }
+        body.bg-symbian .chat-header { background: linear-gradient(to bottom, #00549e 0%, #003b73 100%); border-bottom: 1px solid #00254a; box-shadow: none; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        body.bg-symbian #typingIndicator { background: #e2e8f0; color: #334155; border-top: 1px solid #cbd5e1; }
+        body.bg-symbian .input-panel { background: #e1e8f0; border-top: 1px solid #b0c0d0; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        body.bg-symbian #usernameInput, body.bg-symbian #messageInput, body.bg-symbian .btn-action, body.bg-symbian #sendBtn { border-radius: 10px !important; border: 1px solid #a0b0c0 !important; background: #ffffff !important; color: #333333 !important; box-shadow: inset 0 1px 2px rgba(0,0,0,0.1) !important; }
+        body.bg-symbian #sendBtn { background: linear-gradient(to bottom, #0066cc 0%, #004499 100%) !important; border-color: #003377 !important; color: #ffffff !important; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important; }
+        body.bg-symbian .avatar-glass { border-radius: 10px !important; background: #ffffff !important; border: 1px solid #a0b0c0 !important; box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important; }
+        body.bg-symbian .msg-row > div:not(.avatar-glass) { border-radius: 12px !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+        body.bg-symbian .msg-row.mismo-usuario > div:not(.avatar-glass) { background: linear-gradient(to bottom, #ffffff 0%, #e2f0fd 100%) !important; border: 1px solid #98c6ea !important; }
+        body.bg-symbian .msg-row:not(.mismo-usuario) > div:not(.avatar-glass) { background: #ffffff !important; border: 1px solid #d0d8e0 !important; }
+        body.bg-symbian .msg-row > div:not(.avatar-glass) * { color: #222222 !important; text-shadow: none !important; }
+
+        /* REGLAS EN CASCADA: TEMA WINDOWS PHONE (METRO) */
+        body.bg-wphone .chat-container { background: #000000; border: 2px solid #222222; box-shadow: none; border-radius: 0; }
+        body.bg-wphone .chat-header { background: #0078d7; border-bottom: none; box-shadow: none; border-radius: 0; }
+        body.bg-wphone #typingIndicator { background: #111; color: #fff; border-top: 1px solid #333; }
+        body.bg-wphone .input-panel { background: #000000; border-top: 2px solid #222222; backdrop-filter: none; -webkit-backdrop-filter: none; }
+        body.bg-wphone #usernameInput, body.bg-wphone #messageInput, body.bg-wphone .btn-action, body.bg-wphone #sendBtn { border-radius: 0 !important; border: 2px solid #ffffff !important; background: #000000 !important; color: #ffffff !important; box-shadow: none !important; }
+        body.bg-wphone #sendBtn { background: #0078d7 !important; border-color: #0078d7 !important; }
+        body.bg-wphone .avatar-glass { border-radius: 0 !important; background: #252526 !important; border: 1px solid #555 !important; box-shadow: none !important; }
+        body.bg-wphone .msg-row > div:not(.avatar-glass) { border-radius: 0 !important; box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+        body.bg-wphone .msg-row.mismo-usuario > div:not(.avatar-glass) { background: #0078d7 !important; border: 2px solid #0078d7 !important; }
+        body.bg-wphone .msg-row:not(.mismo-usuario) > div:not(.avatar-glass) { background: #1f1f1f !important; border: 2px solid #1f1f1f !important; }
+        body.bg-wphone .msg-row > div:not(.avatar-glass) * { color: #ffffff !important; text-shadow: none !important; }
     </style>
 </head>
-<body id="appBody">
+<body id="appBody" class="bg-aqua">
 
     <div id="pantalla-bienvenida">
         <div class="caja-cristal-bienvenida">
             <h2>¡Bienvenid@s a mi primera página web! 🌐</h2>
             <h1 class="titulo-proyecto">"lincedex-chat"</h1>
-            
-            <p class="texto-principal">
-                Donde tendrás acceso a un chat retro con estilo <strong>Frutiger Aero de los 2000's</strong>. 🐬✨
-            </p>
-            
-            <div class="caja-reglas">
-                <p>⚠️ Recuerda ser siempre cortés con los demás usuarios.</p>
-            </div>
-            
+            <p class="texto-principal">Donde tendrás acceso a un chat retro con estilo <strong>Frutiger Aero de los 2000's</strong>. 🐬✨</p>
+            <div class="caja-reglas"><p>⚠️ Recuerda ser siempre cortés con los demás usuarios.</p></div>
             <p class="despedida">Sin más que agregar, espero lo disfruten.</p>
             <p class="firma"><strong>- Gary</strong></p>
             
-            <button id="boton-entrar">Entrar al Chat</button>
+            <button id="boton-entrar" onclick="document.getElementById('pantalla-bienvenida').style.display = 'none';">Entrar al Chat</button>
         </div>
     </div>
 
     <div class="chat-container" id="chatContainer">
         <div class="chat-header">
             <h2>🧼 LinceDex Chat</h2>
-            <div class="user-counter">
-                <div class="status-dot-online"></div>
-                <span id="counterText">1 en línea</span>
-            </div>
+            <div class="user-counter"><div class="status-dot-online"></div><span id="counterText">1 en línea</span></div>
         </div>
         
         <div class="chat-messages" id="chatMessages"></div>
-        
         <div id="typingIndicator">🛡️ Admin está escribiendo...</div>
         
         <div class="input-panel">
             <div class="inputs-row">
-                <div class="status-selector" onclick="ciclarEstado()" title="Cambiar estado">
-                    <div class="status-gemma disponible" id="myStatusGemma"></div>
-                </div>
-                
+                <div class="status-selector" onclick="ciclarEstado()" title="Cambiar estado"><div class="status-gemma disponible" id="myStatusGemma"></div></div>
                 <div style="position: relative; display: inline-block;">
                     <div class="avatar-glass" id="myAvatarPreview" onclick="toggleAvatarPicker()" style="cursor: pointer; width: 32px; height: 32px; font-size: 15px;" title="Elegir mi Icono">🦋</div>
                     <div id="avatarPicker" style="display: none; position: absolute; bottom: 38px; left: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.6); border-radius: 14px; padding: 8px; gap: 10px; z-index: 1000; box-shadow: 0 4px 15px rgba(0,60,90,0.2); flex-wrap: wrap; width: 150px; border-top: 1.5px solid #fff;">
@@ -257,7 +137,6 @@
                         <span style="cursor:pointer; font-size:18px;" onclick="seleccionarAvatar('🌟')">🌟</span>
                     </div>
                 </div>
-
                 <input type="text" id="usernameInput" placeholder="Nombre...">
                 <input type="text" id="messageInput" placeholder="Escribe un mensaje...">
             </div>
@@ -272,6 +151,7 @@
             </div>
         </div>
     </div>
-    <script src="script.js"></script>
+    
+    <script src="script.js?v=3"></script>
 </body>
 </html>
