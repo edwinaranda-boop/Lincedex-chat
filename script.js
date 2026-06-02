@@ -88,7 +88,7 @@ function formatearHora(timestamp) {
     var horas = fecha.getHours();
     var minutos = fecha.getMinutes();
     if (horas < 10) horas = '0' + horas;
-    if (minutos < 10) minutes = '0' + minutos;
+    if (minutos < 10) minutos = '0' + minutos;
     return horas + ':' + minutos;
 }
 
@@ -306,7 +306,7 @@ imageInput.addEventListener('change', function(e) {
             imagenSubida: event.target.result, 
             timestamp: Date.now(),
             avatar: miAvatarActual 
-        });
+    });
     };
     reader.readAsDataURL(file);
     imageInput.value = "";
@@ -342,4 +342,10 @@ database.ref('zumbidos').on('child_added', function(snapshot) {
         chatContainer.classList.add('shake');
         setTimeout(function() { chatContainer.classList.remove('shake'); }, 500);
     }
+});
+
+// --- 🚪 CONTROL DE ACCESO (PANTALLA DE BIENVENIDA) ---
+document.getElementById('boton-entrar').addEventListener('click', function() {
+    document.getElementById('pantalla-bienvenida').style.display = 'none';
+    console.log("Acceso concedido. Inicializando entorno de audio interactivo.");
 });
