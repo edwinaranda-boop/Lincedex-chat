@@ -30,10 +30,57 @@ var counterText = document.getElementById('counterText');
 var miSessionId = Math.random().toString(36).substring(2, 9);
 var estadosDisponibles = ["disponible", "ausente", "ocupado"];
 var estadoActualIndice = 0;
-var fondosDisponibles = ["bg-aqua", "bg-aurora", "bg-cosmic", "bg-symbian", "bg-wphone"];
+
+// 🏆 MÁQUINA DEL TIEMPO: ARREGLO DE TEMAS HISTÓRICOS
+var fondosDisponibles = [
+    "bg-aqua",         // 1. Frutiger Aero (Original)
+    "bg-aurora",       // 2. Frutiger Verde
+    "bg-cosmic",       // 3. Frutiger Espacial
+    "bg-symbian",      // 4. Symbian OS (Nokia)
+    "bg-blackberry",   // 5. BlackBerry (Corporativo)
+    "bg-wphone",       // 6. Windows Phone (Metro)
+    "bg-flat",         // 7. Flat Design (WhatsApp Clásico)
+    "bg-material",     // 8. Material Design (2015)
+    "bg-darkmode",     // 9. Modo Oscuro (2019)
+    "bg-glassmodern"   // 10. Material You / Glassmorphism
+];
+
+var nombresFondos = [
+    "🫧 Frutiger Aero (2005)",
+    "🌿 Eco Aero (2008)",
+    "🌌 Cosmic Aero (2009)",
+    "📱 Symbian OS (2010)",
+    "💼 BlackBerry (2011)",
+    "⬛ Windows Phone (2012)",
+    "🟢 Flat Design / iOS 7 (2013)",
+    "📐 Material Design (2015)",
+    "🌙 Modo Oscuro (2019)",
+    "✨ Material You (Actualidad)"
+];
+
 var fondoActualIndice = 0;
 var typingTimeout;
 var miAvatarActual = "🦋"; 
+var toastTimeout;
+
+// 🏆 ROTAR FONDO Y MOSTRAR TOAST
+function rotarFondo() {
+    appBody.className = "";
+    fondoActualIndice = (fondoActualIndice + 1) % fondosDisponibles.length;
+    appBody.classList.add(fondosDisponibles[fondoActualIndice]);
+    
+    var toast = document.getElementById('themeToast');
+    toast.innerText = nombresFondos[fondoActualIndice];
+    toast.style.display = "block";
+    
+    setTimeout(function() { toast.style.opacity = "1"; }, 10);
+    clearTimeout(toastTimeout);
+    
+    toastTimeout = setTimeout(function() {
+        toast.style.opacity = "0";
+        setTimeout(function() { toast.style.display = "none"; }, 400);
+    }, 2000);
+}
 
 function reproducirSonido(tipo) {
     try {
@@ -77,7 +124,7 @@ function formatearHora(timestamp) {
     var minutos = fecha.getMinutes();
     if (horas < 10) horas = '0' + horas;
     if (minutos < 10) minutos = '0' + minutos;
-    return horas + ':' + minutos;
+    return horas + ':' + minutes;
 }
 
 function toggleAvatarPicker() {
@@ -93,7 +140,6 @@ function seleccionarAvatar(avatar) {
 }
 
 function renderizarMensaje(snapshot) {
-    // 🛡️ ESCUDO PROTECTOR PARA DATOS CORRUPTOS
     try {
         var datos = snapshot.val();
         if (!datos) return;
@@ -121,20 +167,21 @@ function renderizarMensaje(snapshot) {
         var color = obtenerColorPorNombre(datos.usuario);
         
         var contenido = datos.mensaje ? 
-            "<div style='font-size: 14.5px; color: #111; font-weight: 500; word-break: break-word; line-height: 1.4;'>" + datos.mensaje + "</div>" :
+            "<div style='font-size: 14.5px; font-weight: 500; word-break: break-word; line-height: 1.4;'>" + datos.mensaje + "</div>" :
             "<img src='" + datos.imagenSubida + "' style='max-width: 150px; max-height: 150px; border-radius: 12px; display: block; margin-top: 5px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.5);'>";
             
-        var HTMLHora = "<div style='font-size: 9.5px; color: rgba(40, 60, 70, 0.5); text-align: right; margin-top: 3px; font-weight: 600;'>" + formatearHora(datos.timestamp) + "</div>";
+        var HTMLHora = "<div style='font-size: 9.5px; opacity: 0.6; text-align: right; margin-top: 3px; font-weight: 600;'>" + formatearHora(datos.timestamp) + "</div>";
             
         var botonBorrar = (miNombre === CLAVE_ADMIN) ? 
-            "<span onclick='eliminarMensaje(\"" + idMensaje + "\")' style='cursor:pointer; position:absolute; top:-4px; right:-4px; background: rgba(255,70,70,0.85); width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:10px; border:1px solid rgba(255,255,255,0.8); shadow: 0 2px 4px rgba(0,0,0,0.2);'>×</span>" : "";
+            "<span onclick='eliminarMensaje(\"" + idMensaje + "\")' style='cursor:pointer; position:absolute; top:-4px; right:-4px; background: rgba(255,70,70,0.85); width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:white !important; font-weight:bold; font-size:10px; border:1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index:5;'>×</span>" : "";
 
+        // AQUÍ CORREGÍ EL ERROR SINTÁCTICO DE DECLARACIÓN (USANDO = EN LUGAR DE +=)
         var htmlReacciones = "<div style='margin-top:4px; display:flex; align-items:center; flex-wrap:wrap; gap:2px;'>";
         if (datos.reacciones) {
             Object.keys(datos.reacciones).forEach(function(emoji) {
                 var conteo = Object.keys(datos.reacciones[emoji]).length;
                 if (conteo > 0) {
-                    htmlReacciones += "<span class='reaction-badge' onclick='enviarReaccion(\""+idMensaje+"\",\""+emoji+"\")'>"+emoji+" <span>"+conteo+"</span></span>";
+                    htmlReacciones += "<span class='reaction-badge' onclick='enviarReaccion(\""+idMensaje+"\",\""+emoji+"\")'>"+emoji+" <span style='color:inherit !important;'>"+conteo+"</span></span>";
                 }
             });
         }
@@ -149,7 +196,7 @@ function renderizarMensaje(snapshot) {
         htmlReacciones += "    <span style='cursor:pointer; font-size:16px; transition:transform 0.1s;' onclick='enviarReaccion(\""+idMensaje+"\",\"🫪\"); togglePicker(\""+idMensaje+"\")'>🫪</span>";
         htmlReacciones += "  </div></div></div>";
 
-        divBubble.innerHTML = "<div style='font-weight:700; color:"+color+"; font-size:11px; margin-bottom:4px; text-shadow: 0 1px 0 rgba(255,255,255,0.5);'>" + datos.usuario + "</div>" + 
+        divBubble.innerHTML = "<div style='font-weight:700; color:"+color+"; font-size:11px; margin-bottom:4px;'>" + datos.usuario + "</div>" + 
                               contenido + HTMLHora + htmlReacciones + botonBorrar;
         
         var avatarFinal = datos.avatar ? datos.avatar : obtenerAvatarPorNombre(datos.usuario);
@@ -201,12 +248,6 @@ database.ref('presence').on('value', function(snapshot) {
     var onlineCount = snapshot.numChildren();
     counterText.innerText = onlineCount + (onlineCount === 1 ? " en línea" : " en línea");
 });
-
-function rotarFondo() {
-    appBody.className = "";
-    fondoActualIndice = (fondoActualIndice + 1) % fondosDisponibles.length;
-    appBody.classList.add(fondosDisponibles[fondoActualIndice]);
-}
 
 function ciclarEstado() {
     myStatusGemma.className = "status-gemma";
