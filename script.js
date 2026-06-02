@@ -1,4 +1,4 @@
-// CONFIGURACIÓN DE FIREBASE
+// CONFIGURACIÓN DE FIREBASE (Limpia y declarada una sola vez)
 var firebaseConfig = {
     apiKey: "AIzaSyBbjxZKuEUhwEZZQZmofBhz2Vh71HKiK4",
     authDomain: "lincedex.firebaseapp.com",
@@ -25,6 +25,7 @@ var appBody = document.getElementById('appBody');
 var myStatusGemma = document.getElementById('myStatusGemma');
 var typingIndicator = document.getElementById('typingIndicator');
 var counterText = document.getElementById('counterText');
+var themeBtn = document.getElementById('themeBtn'); // Añadido por seguridad
 
 // Variables locales globales
 var miSessionId = Math.random().toString(36).substring(2, 9);
@@ -70,16 +71,23 @@ function rotarFondo() {
     appBody.classList.add(fondosDisponibles[fondoActualIndice]);
     
     var toast = document.getElementById('themeToast');
-    toast.innerText = nombresFondos[fondoActualIndice];
-    toast.style.display = "block";
-    
-    setTimeout(function() { toast.style.opacity = "1"; }, 10);
-    clearTimeout(toastTimeout);
-    
-    toastTimeout = setTimeout(function() {
-        toast.style.opacity = "0";
-        setTimeout(function() { toast.style.display = "none"; }, 400);
-    }, 2000);
+    if(toast) {
+        toast.innerText = nombresFondos[fondoActualIndice];
+        toast.style.display = "block";
+        
+        setTimeout(function() { toast.style.opacity = "1"; }, 10);
+        clearTimeout(toastTimeout);
+        
+        toastTimeout = setTimeout(function() {
+            toast.style.opacity = "0";
+            setTimeout(function() { toast.style.display = "none"; }, 400);
+        }, 2000);
+    }
+}
+
+// Escuchador de evento para el botón de temas (si existe en tu HTML)
+if (themeBtn) {
+    themeBtn.addEventListener('click', rotarFondo);
 }
 
 function reproducirSonido(tipo) {
@@ -124,17 +132,20 @@ function formatearHora(timestamp) {
     var minutos = fecha.getMinutes();
     if (horas < 10) horas = '0' + horas;
     if (minutos < 10) minutos = '0' + minutos;
-    return horas + ':' + minutes;
+    return horas + ':' + minutos; // CORREGIDO: "minutes" por "minutos"
 }
 
 function toggleAvatarPicker() {
     var picker = document.getElementById('avatarPicker');
-    picker.style.display = (picker.style.display === 'none' || picker.style.display === '') ? 'flex' : 'none';
+    if(picker) {
+        picker.style.display = (picker.style.display === 'none' || picker.style.display === '') ? 'flex' : 'none';
+    }
 }
 
 function seleccionarAvatar(avatar) {
     miAvatarActual = avatar;
-    document.getElementById('myAvatarPreview').innerText = avatar;
+    var preview = document.getElementById('myAvatarPreview');
+    if(preview) preview.innerText = avatar;
     toggleAvatarPicker();
     actualizarPresencia();
 }
@@ -147,7 +158,7 @@ function renderizarMensaje(snapshot) {
         datos.usuario = datos.usuario || "Anónimo";
         datos.timestamp = datos.timestamp || Date.now();
         var idMensaje = snapshot.key;
-        var miNombre = usernameInput.value.trim(); 
+        var miNombre = usernameInput ? usernameInput.value.trim() : ""; 
 
         var row = document.getElementById("row_" + idMensaje) || document.createElement('div');
         row.id = "row_" + idMensaje;
@@ -175,7 +186,6 @@ function renderizarMensaje(snapshot) {
         var botonBorrar = (miNombre === CLAVE_ADMIN) ? 
             "<span onclick='eliminarMensaje(\"" + idMensaje + "\")' style='cursor:pointer; position:absolute; top:-4px; right:-4px; background: rgba(255,70,70,0.85); width:20px; height:20px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; color:white !important; font-weight:bold; font-size:10px; border:1px solid rgba(255,255,255,0.8); box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index:5;'>×</span>" : "";
 
-        // AQUÍ CORREGÍ EL ERROR SINTÁCTICO DE DECLARACIÓN (USANDO = EN LUGAR DE +=)
         var htmlReacciones = "<div style='margin-top:4px; display:flex; align-items:center; flex-wrap:wrap; gap:2px;'>";
         if (datos.reacciones) {
             Object.keys(datos.reacciones).forEach(function(emoji) {
@@ -208,34 +218,37 @@ function renderizarMensaje(snapshot) {
         row.appendChild(divBubble);
 
         if (!document.getElementById("row_" + idMensaje)) {
-            chatMessages.appendChild(row);
+            if(chatMessages) chatMessages.appendChild(row);
             reproducirSonido('msg'); 
         }
         
-        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if(chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
     } catch(errorRenderizado) {
         console.error("Error silencioso al mostrar un mensaje:", errorRenderizado);
     }
 }
 
-function togglePicker(idMensaje) {
+window.togglePicker = function(idMensaje) {
     var picker = document.getElementById('picker_' + idMensaje);
     if (picker) { picker.style.display = (picker.style.display === 'none' || picker.style.display === '') ? 'flex' : 'none'; }
 }
 
-function enviarReaccion(idMensaje, emoji) {
-    var nombre = usernameInput.value.trim() || "Anónimo";
+window.enviarReaccion = function(idMensaje, emoji) {
+    var nombre = usernameInput ? usernameInput.value.trim() || "Anónimo" : "Anónimo";
     database.ref('mensajes/' + idMensaje + '/reacciones/' + emoji + '/' + miSessionId).set(nombre);
 }
 
-document.getElementById('nudgeBtn').addEventListener('click', function() {
-    var nombre = usernameInput.value.trim() || "Anónimo";
-    if (nombre === CLAVE_ADMIN) nombre = "🛡️ ADMINISTRADOR";
-    database.ref('zumbidos').push({ usuario: nombre, timestamp: Date.now() });
-});
+var nudgeBtn = document.getElementById('nudgeBtn');
+if(nudgeBtn) {
+    nudgeBtn.addEventListener('click', function() {
+        var nombre = usernameInput ? usernameInput.value.trim() || "Anónimo" : "Anónimo";
+        if (nombre === CLAVE_ADMIN) nombre = "🛡️ ADMINISTRADOR";
+        database.ref('zumbidos').push({ usuario: nombre, timestamp: Date.now() });
+    });
+}
 
 function actualizarPresencia() {
-    var nombre = usernameInput.value.trim() || "Anónimo";
+    var nombre = usernameInput ? usernameInput.value.trim() || "Anónimo" : "Anónimo";
     if (nombre === CLAVE_ADMIN) nombre = "🛡️ ADMINISTRADOR";
     var refUser = database.ref('presence/' + miSessionId);
     refUser.set({ usuario: nombre, estado: estadosDisponibles[estadoActualIndice], avatar: miAvatarActual });
@@ -246,71 +259,93 @@ database.ref('.info/connected').on('value', function(snapshot) { if (snapshot.va
 
 database.ref('presence').on('value', function(snapshot) {
     var onlineCount = snapshot.numChildren();
-    counterText.innerText = onlineCount + (onlineCount === 1 ? " en línea" : " en línea");
+    if(counterText) counterText.innerText = onlineCount + (onlineCount === 1 ? " en línea" : " en línea");
 });
 
 function ciclarEstado() {
-    myStatusGemma.className = "status-gemma";
-    estadoActualIndice = (estadoActualIndice + 1) % estadosDisponibles.length;
-    myStatusGemma.classList.add(estadosDisponibles[estadoActualIndice]);
-    actualizarPresencia();
+    if(myStatusGemma) {
+        myStatusGemma.className = "status-gemma";
+        estadoActualIndice = (estadoActualIndice + 1) % estadosDisponibles.length;
+        myStatusGemma.classList.add(estadosDisponibles[estadoActualIndice]);
+        actualizarPresencia();
+    }
 }
 
-messageInput.addEventListener('input', function() {
-    var nombre = usernameInput.value.trim() || "Anónimo";
-    if (nombre === CLAVE_ADMIN) nombre = "🛡️ ADMINISTRADOR";
-    database.ref('typing/' + miSessionId).set({ usuario: nombre, escribiendo: true });
-    clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(function() { database.ref('typing/' + miSessionId).remove(); }, 2000);
-});
+if(messageInput) {
+    messageInput.addEventListener('input', function() {
+        var nombre = usernameInput ? usernameInput.value.trim() || "Anónimo" : "Anónimo";
+        if (nombre === CLAVE_ADMIN) nombre = "🛡️ ADMINISTRADOR";
+        database.ref('typing/' + miSessionId).set({ usuario: nombre, escribiendo: true });
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(function() { database.ref('typing/' + miSessionId).remove(); }, 2000);
+    });
+}
 
 database.ref('typing').on('value', function(snapshot) {
     var listaEscribiendo = [];
     snapshot.forEach(function(child) { if (child.key !== miSessionId) listaEscribiendo.push(child.val().usuario); });
-    if (listaEscribiendo.length > 0) {
-        typingIndicator.innerText = listaEscribiendo.join(', ') + " está escribiendo..."; typingIndicator.style.display = "block";
-    } else { typingIndicator.style.display = "none"; }
+    if (typingIndicator) {
+        if (listaEscribiendo.length > 0) {
+            typingIndicator.innerText = listaEscribiendo.join(', ') + " está escribiendo..."; 
+            typingIndicator.style.display = "block";
+        } else { 
+            typingIndicator.style.display = "none"; 
+        }
+    }
 });
 
-usernameInput.addEventListener('input', function() {
-    actualizarPresencia();
-    chatMessages.innerHTML = '';
-    database.ref('mensajes').once('value', function(snapshot) { snapshot.forEach(function(childSnapshot) { renderizarMensaje(childSnapshot); }); });
-});
+if(usernameInput) {
+    usernameInput.addEventListener('input', function() {
+        actualizarPresencia();
+        if(chatMessages) chatMessages.innerHTML = '';
+        database.ref('mensajes').once('value', function(snapshot) { snapshot.forEach(function(childSnapshot) { renderizarMensaje(childSnapshot); }); });
+    });
+}
 
 function enviarMensaje() {
-    var nombre = usernameInput.value.trim() || "Anónimo";
-    var texto = messageInput.value.trim();
+    var nombre = usernameInput ? usernameInput.value.trim() || "Anónimo" : "Anónimo";
+    var texto = messageInput ? messageInput.value.trim() : "";
     if (texto === "") return; 
     if (nombre === CLAVE_ADMIN) nombre = "🛡️ ADMINISTRADOR";
     
     database.ref('mensajes').push({ usuario: nombre, mensaje: texto, timestamp: Date.now(), avatar: miAvatarActual });
-    database.ref('typing/' + miSessionId).remove(); messageInput.value = ""; 
+    database.ref('typing/' + miSessionId).remove(); 
+    if(messageInput) messageInput.value = ""; 
 }
 
-imageInput.addEventListener('change', function(e) {
-    var file = e.target.files[0]; if (!file) return;
-    var nombre = usernameInput.value.trim() || "Anónimo"; if (nombre === CLAVE_ADMIN) nombre = "🛡️ ADMINISTRADOR";
-    var reader = new FileReader();
-    reader.onload = function(event) { database.ref('mensajes').push({ usuario: nombre, imagenSubida: event.target.result, timestamp: Date.now(), avatar: miAvatarActual }); };
-    reader.readAsDataURL(file); imageInput.value = "";
-});
+if(imageInput) {
+    imageInput.addEventListener('change', function(e) {
+        var file = e.target.files[0]; if (!file) return;
+        var nombre = usernameInput ? usernameInput.value.trim() || "Anónimo" : "Anónimo"; 
+        if (nombre === CLAVE_ADMIN) nombre = "🛡️ ADMINISTRADOR";
+        var reader = new FileReader();
+        reader.onload = function(event) { database.ref('mensajes').push({ usuario: nombre, imagenSubida: event.target.result, timestamp: Date.now(), avatar: miAvatarActual }); };
+        reader.readAsDataURL(file); 
+        imageInput.value = "";
+    });
+}
 
-sendBtn.addEventListener('click', enviarMensaje);
-messageInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') enviarMensaje(); });
+if(sendBtn) sendBtn.addEventListener('click', enviarMensaje);
+if(messageInput) messageInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') enviarMensaje(); });
 
-function eliminarMensaje(idMensaje) { if (usernameInput.value.trim() === CLAVE_ADMIN) database.ref('mensajes/' + idMensaje).remove(); }
+window.eliminarMensaje = function(idMensaje) { 
+    if (usernameInput && usernameInput.value.trim() === CLAVE_ADMIN) database.ref('mensajes/' + idMensaje).remove(); 
+}
 
 database.ref('mensajes').on('child_added', function(snapshot) { renderizarMensaje(snapshot); });
 database.ref('mensajes').on('child_changed', function(snapshot) { renderizarMensaje(snapshot); });
 database.ref('mensajes').on('child_removed', function(snapshot) {
-    var rowAEliminar = document.getElementById("row_" + snapshot.key); if (rowAEliminar) rowAEliminar.remove();
+    var rowAEliminar = document.getElementById("row_" + snapshot.key); 
+    if (rowAEliminar) rowAEliminar.remove();
 });
 
 database.ref('zumbidos').on('child_added', function(snapshot) {
     var datos = snapshot.val();
     if (Date.now() - datos.timestamp < 5000) {
-        reproducirSonido('zumbido'); chatContainer.classList.add('shake');
-        setTimeout(function() { chatContainer.classList.remove('shake'); }, 500);
+        reproducirSonido('zumbido'); 
+        if(chatContainer) {
+            chatContainer.classList.add('shake');
+            setTimeout(function() { chatContainer.classList.remove('shake'); }, 500);
+        }
     }
 });
